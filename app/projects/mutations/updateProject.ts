@@ -19,7 +19,7 @@ export default resolver.pipe(
   enforceSuperAdminIfNotCurrentOrganization,
   async ({ id, name, organizationId }) => {
     // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-    const project = await db.project.update({ where: { id, organizationId }, data: { name } })
+    const project = await db.project.update({ where: { id }, data: { name } })
 
     return project
   }
