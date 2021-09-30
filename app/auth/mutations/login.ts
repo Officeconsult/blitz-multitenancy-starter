@@ -6,7 +6,7 @@ import { Role } from "types"
 export const authenticateUser = async (rawEmail: string, rawPassword: string) => {
   const email = rawEmail.toLowerCase().trim()
   const password = rawPassword.trim()
-  const user = await db.user.findFirst({ where: { email } })
+  const user = await db.user.findFirst({ where: { email }, include: { memberships: true } })
   if (!user) throw new AuthenticationError()
 
   const result = await SecurePassword.verify(user.hashedPassword, password)
@@ -24,8 +24,11 @@ export const authenticateUser = async (rawEmail: string, rawPassword: string) =>
 export default resolver.pipe(resolver.zod(Login), async ({ email, password }, ctx) => {
   // This throws an error if credentials are invalid
   const user = await authenticateUser(email, password)
-
-  await ctx.session.$create({ userId: user.id, role: user.role as Role })
+  await ctx.session.$create({
+    userId: user.id,
+    roles: [user.role, user.memberships[0].role as Role],
+    orgId: user.memberships[0].organizationId,
+  })
 
   return user
 })
